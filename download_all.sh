@@ -75,12 +75,10 @@ while IFS=, read -r file_name url; do
 
   if [ -f "./convert/android/hdpi/${filename}.png" ] && [ -f "./convert/android/ldpi/${filename}.png" ] && [ -f "./convert/android/mdpi/${filename}.png" ] && [ -f "./convert/android/xhdpi/${filename}.png" ] && [ -f "./convert/android/xxhdpi/${filename}.png" ] && [ -f "./convert/android/xxxhdpi/${filename}.png" ]; then
     echo "${filename}" >> ./uri_converted.txt
-    continue
+    cp "./convert/android/hdpi/${filename}.png" "./convert/ios/1x/${filename}.png"
+    cp "./convert/android/xhdpi/${filename}.png" "./convert/ios/2x/${filename}.png"
+    cp "./convert/android/xxxhdpi/${filename}.png" "./convert/ios/3x/${filename}.png"
   fi
-
-  cp "./convert/android/hdpi/${filename}.png" "./convert/ios/1x/${filename}.png"
-  cp "./convert/android/xhdpi/${filename}.png" "./convert/ios/2x/${filename}.png"
-  cp "./convert/android/xxxhdpi/${filename}.png" "./convert/ios/3x/${filename}.png"
 done < ./uri.txt
 
 echo "########### Arquivos que não baixaram"
