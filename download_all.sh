@@ -1,12 +1,18 @@
 #!/bin/bash
 
-rm -rf ./convert/*.png
+rm -rf ./convert/*
 
-rm -rf ./download/*.svg
-rm -rf ./download/*.png
-rm -rf ./download/*.jpg
-rm -rf ./download/*.jpeg
-rm -rf ./download/*.gif
+mkdir -p ./convert/ios/1x
+mkdir -p ./convert/ios/2x
+mkdir -p ./convert/ios/3x
+mkdir -p ./convert/android/hdpi
+mkdir -p ./convert/android/ldpi
+mkdir -p ./convert/android/mdpi
+mkdir -p ./convert/android/xhdpi
+mkdir -p ./convert/android/xxhdpi
+mkdir -p ./convert/android/xxxhdpi
+
+rm -rf ./download/*
 
 echo "" > ./uri_base.txt
 echo "" > ./uri_converted.txt
@@ -26,16 +32,16 @@ while IFS=, read -r file_name url; do
 	echo "${filename}" >> ./uri_dlownloaded.txt
 
   original_image="./download/${filename}.svg"
-  converted_image="./convert/${filename}.png"
 
   if ! grep -q '<svg[^>]*' "$original_image"; then
    continue
   fi
 
-  sed -i ':a;N;$!ba;s/\n/ /g' "$original_image"
+  sed -i ':a;N;$!ba;s/\n/__NEWLINE__/g' "$original_image"
   sed -i 's/ viewBox="[^"]*"//' "$original_image"
   sed -i '/<svg[^>]*>/s//&<g id="g-root">/' "$original_image"
   sed -i 's/<\/svg>/<\/g>&/' "$original_image"
+  sed -i 's/__NEWLINE__/\n/g' "$original_image"
 
   centerX=0
   centerY=0
@@ -46,6 +52,7 @@ while IFS=, read -r file_name url; do
 
   echo "Width: $width, Height: $height, MaxSize: $maxSize, CenterX: $centerX, CenterY: $centerY, group_info: $group_info"
 
+  sed -i ':a;N;$!ba;s/\n/__NEWLINE__/g' "$original_image"
   if ! grep -q '<svg[^>]* width="' "$original_image"; then
     sed -i -E "s/<svg/<svg width=\"$maxSize\"/" "$original_image"
   else
@@ -56,13 +63,24 @@ while IFS=, read -r file_name url; do
   else
     sed -i -E "s/(<svg[^>]* height=\")[^\"]+(\")/\1$maxSize\2/" "$original_image"
   fi
+  sed -i 's/__NEWLINE__/\n/g' "$original_image"
 
   inkscape "$original_image" --batch-process --actions="select-by-id:g-root;object-align:hcenter vcenter page" --export-filename="$original_image"
-  inkscape "$original_image" --batch-process --export-type=png --export-area-page --export-width=72 --export-height=72 --export-filename="$converted_image"
+  inkscape "$original_image" --batch-process --export-type=png --export-area-page --export-width=24 --export-height=24 --export-filename="./convert/android/hdpi/${filename}.png"
+  inkscape "$original_image" --batch-process --export-type=png --export-area-page --export-width=32 --export-height=32 --export-filename="./convert/android/ldpi/${filename}.png"
+  inkscape "$original_image" --batch-process --export-type=png --export-area-page --export-width=48 --export-height=48 --export-filename="./convert/android/mdpi/${filename}.png"
+  inkscape "$original_image" --batch-process --export-type=png --export-area-page --export-width=72 --export-height=72 --export-filename="./convert/android/xhdpi/${filename}.png"
+  inkscape "$original_image" --batch-process --export-type=png --export-area-page --export-width=96 --export-height=96 --export-filename="./convert/android/xxhdpi/${filename}.png"
+  inkscape "$original_image" --batch-process --export-type=png --export-area-page --export-width=120 --export-height=120 --export-filename="./convert/android/xxxhdpi/${filename}.png"
 
-  if [ -f "${converted_image}" ]; then
+  if [ -f "./convert/android/hdpi/${filename}.png" ] && [ -f "./convert/android/ldpi/${filename}.png" ] && [ -f "./convert/android/mdpi/${filename}.png" ] && [ -f "./convert/android/xhdpi/${filename}.png" ] && [ -f "./convert/android/xxhdpi/${filename}.png" ] && [ -f "./convert/android/xxxhdpi/${filename}.png" ]; then
     echo "${filename}" >> ./uri_converted.txt
+    continue
   fi
+
+  cp "./convert/android/hdpi/${filename}.png" "./convert/ios/1x/${filename}.png"
+  cp "./convert/android/xhdpi/${filename}.png" "./convert/ios/2x/${filename}.png"
+  cp "./convert/android/xxxhdpi/${filename}.png" "./convert/ios/3x/${filename}.png"
 done < ./uri.txt
 
 echo "########### Arquivos que não baixaram"
